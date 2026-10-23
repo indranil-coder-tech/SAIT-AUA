@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Download, QrCode, Copy, Check, ExternalLink } from "lucide-react";
-import { SpatialCard } from "../spatial/SpatialCard";
 
 interface QRCodeCardProps {
   customUrl?: string;
@@ -17,7 +16,6 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Determine the active submission URL
     const appUrl =
       customUrl ||
       process.env.NEXT_PUBLIC_APP_URL ||
@@ -26,12 +24,12 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
     const fullSubmitUrl = `${appUrl.replace(/\/$/, "")}/submit`;
     setUrl(fullSubmitUrl);
 
-    // Generate high-contrast PNG Data URL with quiet zone margin
+    // High-contrast QR with solid margin
     QRCode.toDataURL(fullSubmitUrl, {
       width: 400,
       margin: 2,
       color: {
-        dark: "#050711",
+        dark: "#20231E",
         light: "#FFFFFF",
       },
       errorCorrectionLevel: "H",
@@ -39,12 +37,11 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
       .then((res) => setDataUrl(res))
       .catch((err) => console.error("QR PNG generation error:", err));
 
-    // Generate SVG string for vector export
     QRCode.toString(fullSubmitUrl, {
       type: "svg",
       margin: 2,
       color: {
-        dark: "#050711",
+        dark: "#20231E",
         light: "#FFFFFF",
       },
       errorCorrectionLevel: "H",
@@ -78,50 +75,52 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
   };
 
   return (
-    <SpatialCard glow="cyan" className={className} enableTilt={false}>
-      <div className="p-6 flex flex-col items-center text-center">
+    <div className={`editorial-box rounded-3xl p-6 bg-white ${className || ""}`}>
+      <div className="flex flex-col items-center text-center">
         {/* Header Badge */}
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-3">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-citrus text-charcoal border border-charcoal text-[11px] font-mono font-bold uppercase tracking-wider mb-3">
           <QrCode className="w-3.5 h-3.5" />
-          <span>Student Submission QR</span>
+          <span>STUDENT SUBMISSION QR</span>
         </div>
 
-        <h3 className="text-xl font-bold text-white mb-1">Scan to Ask Anonymously</h3>
-        <p className="text-xs text-slate-400 max-w-xs mb-5">
-          Display this in your slide deck or print on tables. Points directly to the mobile submission portal.
+        <h3 className="font-display text-3xl font-black text-charcoal mb-1">
+          SCAN TO ASK ANONYMOUSLY
+        </h3>
+        <p className="text-xs font-mono text-charcoal/70 max-w-xs mb-5">
+          Display in presentation slides or print on table slips for incoming first-years.
         </p>
 
-        {/* QR Code Container with High-Contrast White Background & Margin */}
-        <div className="relative p-3.5 rounded-2xl bg-white shadow-spatial-glow border-2 border-cyan-400/30 group">
+        {/* QR Code Container */}
+        <div className="p-4 rounded-2xl bg-white border-3 border-charcoal shadow-editorial-sm">
           {dataUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={dataUrl}
               alt="Scan to submit an anonymous question to SAIT"
-              className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-lg"
+              className="w-56 h-56 sm:w-60 sm:h-60 object-contain rounded-lg"
             />
           ) : (
-            <div className="w-56 h-56 flex items-center justify-center text-slate-400">
+            <div className="w-56 h-56 flex items-center justify-center font-mono text-xs text-charcoal/60">
               Generating QR...
             </div>
           )}
         </div>
 
-        {/* URL Display and Copy */}
-        <div className="mt-4 w-full flex items-center gap-2 p-2 rounded-xl bg-midnight-900/80 border border-white/10 text-xs text-slate-300 font-mono overflow-hidden">
-          <span className="truncate flex-1 text-left px-2 select-all">{url || "Loading URL..."}</span>
+        {/* URL Box */}
+        <div className="mt-4 w-full flex items-center gap-2 p-2 rounded-xl bg-ivory border-2 border-charcoal font-mono text-xs text-charcoal overflow-hidden">
+          <span className="truncate flex-1 text-left px-2 font-medium">{url || "Loading..."}</span>
           <button
             onClick={handleCopyLink}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 transition-colors"
-            title="Copy submission link"
+            className="p-1.5 rounded-lg bg-white hover:bg-citrus border border-charcoal transition-colors"
+            title="Copy link"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-700" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 transition-colors"
+            className="p-1.5 rounded-lg bg-white hover:bg-citrus border border-charcoal transition-colors"
             title="Open in new tab"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -133,7 +132,7 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
           <button
             onClick={handleDownloadPNG}
             disabled={!dataUrl}
-            className="flex-1 min-w-[130px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-medium text-xs hover:from-cyan-500 hover:to-blue-500 transition-all shadow-md active:scale-95 disabled:opacity-50"
+            className="btn-editorial-tangerine flex-1 min-w-[120px] py-2.5 px-4 rounded-xl text-xs font-mono uppercase tracking-wider flex items-center justify-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download PNG</span>
@@ -141,13 +140,13 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
           <button
             onClick={handleDownloadSVG}
             disabled={!svgString}
-            className="flex-1 min-w-[130px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-midnight-800 text-cyan-200 border border-cyan-500/30 font-medium text-xs hover:bg-midnight-700 transition-all active:scale-95 disabled:opacity-50"
+            className="flex-1 min-w-[120px] py-2.5 px-4 rounded-xl bg-ivory hover:bg-citrus/40 border-2 border-charcoal text-charcoal text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download SVG</span>
           </button>
         </div>
       </div>
-    </SpatialCard>
+    </div>
   );
 }

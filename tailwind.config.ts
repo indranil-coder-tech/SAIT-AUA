@@ -11,53 +11,70 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        midnight: {
-          950: "#040711",
-          900: "#080D1A",
-          850: "#0D1426",
-          800: "#121C33",
-          700: "#1E2B4D",
+        // BrewDistrict24 Editorial Palette
+        ivory: {
+          DEFAULT: "#F5F1E7",
+          50: "#FAF8F3",
+          100: "#F5F1E7",
+          200: "#E8E2D1",
+          300: "#DDD4BD",
         },
-        cyber: {
-          violet: "#8B5CF6",
-          glowViolet: "#A855F7",
-          cyan: "#06B6D4",
-          neonCyan: "#22D3EE",
-          blue: "#3B82F6",
-          amber: "#F59E0B",
-          emerald: "#10B981",
-          rose: "#F43F5E"
-        }
+        sage: {
+          DEFAULT: "#9EAE86",
+          light: "#B8C6A5",
+          dark: "#83946B",
+        },
+        olive: {
+          DEFAULT: "#536547",
+          light: "#697E5B",
+          dark: "#3E4C35",
+          deep: "#2B3524",
+        },
+        citrus: {
+          DEFAULT: "#E8F05A",
+          hover: "#DCE54A",
+          light: "#F2F78A",
+        },
+        tangerine: {
+          DEFAULT: "#FF814F",
+          hover: "#F26E38",
+          dark: "#D9561E",
+        },
+        charcoal: {
+          DEFAULT: "#20231E",
+          soft: "#2E332B",
+          muted: "#555A50",
+          light: "#82877D",
+        },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "-apple-system", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
+        sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-bebas)", "Impact", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       boxShadow: {
-        "spatial-card": "0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
-        "spatial-glow": "0 0 50px -10px rgba(139, 92, 246, 0.4), 0 0 30px -10px rgba(6, 182, 212, 0.3)",
-        "spatial-cyan": "0 0 35px -5px rgba(6, 182, 212, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-        "spatial-projector": "0 30px 80px rgba(0, 0, 0, 0.8), 0 0 60px rgba(139, 92, 246, 0.25), inset 0 2px 2px rgba(255, 255, 255, 0.15)",
+        "editorial-sm": "0 2px 0 #20231E",
+        "editorial": "4px 4px 0 #20231E",
+        "editorial-lg": "8px 8px 0 #20231E",
+        "editorial-xl": "12px 12px 0 #20231E",
+        "sculpture": "0 30px 60px -15px rgba(32, 35, 30, 0.25), 0 10px 20px -5px rgba(83, 101, 71, 0.2)",
       },
       animation: {
-        "float-slow": "floatSlow 8s ease-in-out infinite",
-        "pulse-subtle": "pulseSubtle 4s ease-in-out infinite",
-        "shimmer": "shimmer 2.5s linear infinite",
+        "float-gentle": "floatGentle 6s ease-in-out infinite",
+        "float-reverse": "floatReverse 7s ease-in-out infinite",
+        "spin-slow": "spin 20s linear infinite",
       },
       keyframes: {
-        floatSlow: {
+        floatGentle: {
           "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
-          "50%": { transform: "translateY(-10px) rotate(0.5deg)" },
+          "50%": { transform: "translateY(-12px) rotate(1.5deg)" },
         },
-        pulseSubtle: {
-          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
-          "50%": { opacity: "0.7", transform: "scale(1.05)" },
+        floatReverse: {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(12px) rotate(-1.5deg)" },
         },
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
-        }
-      }
+      },
     },
   },
   plugins: [],

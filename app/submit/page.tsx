@@ -2,10 +2,9 @@
 
 import React, { useState } from "react";
 import confetti from "canvas-confetti";
-import { Send, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Shield, HelpCircle } from "lucide-react";
-import { SpatialBackground } from "@/components/spatial/SpatialBackground";
+import { Send, CheckCircle2, AlertCircle, RefreshCw, Shield, HelpCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { Header } from "@/components/navigation/Header";
-import { SpatialCard } from "@/components/spatial/SpatialCard";
 
 const MAX_CHARS = 500;
 
@@ -53,19 +52,16 @@ export default function SubmitPage() {
         throw new Error(json.error || "Submission failed. Please check your connection and try again.");
       }
 
-      // Success confirmed by backend
       setSubmittedSuccess(true);
 
-      // Trigger celebratory confetti
       confetti({
-        particleCount: 70,
+        particleCount: 75,
         spread: 60,
         origin: { y: 0.75 },
-        colors: ["#8B5CF6", "#06B6D4", "#3B82F6", "#F59E0B"],
+        colors: ["#FF814F", "#E8F05A", "#9EAE86", "#20231E"],
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
-      setErrorMessage(msg);
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -77,85 +73,75 @@ export default function SubmitPage() {
     setErrorMessage(null);
   };
 
-  const handleSuggestionClick = (topic: string) => {
-    if (!question) {
-      setQuestion(`Regarding ${topic.replace(/^[^\w\s]+/, "").trim()}: `);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col relative selection:bg-violet-600 selection:text-white">
-      <SpatialBackground />
+    <div className="min-h-screen flex flex-col bg-ivory text-charcoal selection:bg-citrus selection:text-charcoal">
       <Header />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12 max-w-xl mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-16 max-w-xl mx-auto w-full">
         {submittedSuccess ? (
           /* ================= SUCCESS STATE ================= */
-          <SpatialCard glow="violet" className="w-full p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-300">
-            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-5 shadow-spatial-glow">
-              <CheckCircle2 className="w-9 h-9" />
+          <div className="w-full bg-white rounded-3xl border-3 border-charcoal p-8 sm:p-10 shadow-editorial-xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="mx-auto w-20 h-20 rounded-full bg-citrus border-2 border-charcoal flex items-center justify-center text-charcoal shadow-editorial-sm">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
-              Your question is in! 🎉
-            </h2>
-            <p className="text-slate-300 text-sm sm:text-base mb-6 leading-relaxed">
-              Thanks for asking. Keep the curiosity coming — your question is queued for discussion by the SAIT team on the main screen!
-            </p>
-
-            <div className="p-4 rounded-xl bg-midnight-900/60 border border-white/10 mb-6 text-left">
-              <span className="text-[11px] font-semibold tracking-wider uppercase text-violet-400 block mb-1">
-                Submitted Question:
+            <div className="space-y-2">
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-olive bg-sage/20 px-3 py-1 rounded-full border border-charcoal/20">
+                SUCCESS CONFIRMED
               </span>
-              <p className="text-sm text-slate-200 italic break-words">&ldquo;{question}&rdquo;</p>
+              <h2 className="font-display text-4xl sm:text-5xl font-black text-charcoal leading-none">
+                QUESTION RECEIVED.
+              </h2>
+              <p className="text-base text-charcoal/80 font-medium leading-relaxed max-w-sm mx-auto">
+                You&apos;re officially part of the conversation! Your question has been queued live for the SAIT panel.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-ivory border-2 border-charcoal/20 text-left font-serif italic text-base text-charcoal">
+              &ldquo;{question}&rdquo;
             </div>
 
             <button
               onClick={handleAskAnother}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 text-white font-semibold text-sm shadow-spatial-glow hover:opacity-95 transition-all active:scale-[0.98]"
+              className="btn-editorial-citrus w-full py-4 px-6 rounded-2xl font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-editorial transition-all flex items-center justify-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Ask Another Question</span>
             </button>
-          </SpatialCard>
+          </div>
         ) : (
           /* ================= SUBMISSION FORM ================= */
           <div className="w-full flex flex-col gap-6">
-            {/* Header / Hero Section */}
-            <div className="text-center space-y-2.5">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs font-semibold uppercase tracking-wider shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>SAIT GIM • Ask Us Anything</span>
+            {/* Header Titles */}
+            <div className="space-y-3">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-charcoal/70 hover:text-charcoal mb-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Hub</span>
+              </Link>
+
+              <div className="inline-block px-3 py-1 rounded-full bg-sage/30 text-charcoal border border-charcoal font-mono text-[11px] font-bold uppercase tracking-wider">
+                SAIT GIM · ANONYMOUS FORUM
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-                Your Questions. <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-cyan-300 to-blue-400">
-                  Our Honest Answers.
-                </span>
+              <h1 className="font-display text-5xl sm:text-6xl font-black text-charcoal leading-none">
+                GOT A QUESTION?
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-300 font-medium">
-                &ldquo;No question is too silly, and no doubt is too small!&rdquo;
+              <p className="text-lg font-bold text-olive-dark">
+                Ask anything. No names. No awkwardness.
               </p>
-
-              {/* Privacy Guarantee Pill */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-                <Shield className="w-3.5 h-3.5" />
-                <span>100% Anonymous. No login, names, or accounts required.</span>
-              </div>
             </div>
 
-            {/* Submission Form Card */}
-            <SpatialCard glow="violet" className="w-full p-5 sm:p-7 shadow-spatial-card">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Honeypot field (hidden from real users, traps spambots) */}
+            {/* Form Box */}
+            <div className="bg-white rounded-3xl border-3 border-charcoal p-6 sm:p-8 shadow-editorial-lg">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Honeypot field */}
                 <div className="sr-only" aria-hidden="true">
-                  <label htmlFor="website">Website</label>
                   <input
                     type="text"
-                    id="website"
-                    name="website"
                     tabIndex={-1}
                     value={honeypot}
                     onChange={(e) => setHoneypot(e.target.value)}
@@ -163,87 +149,89 @@ export default function SubmitPage() {
                   />
                 </div>
 
-                {/* Question Input */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="question-input" className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-violet-400" />
-                      <span>What&apos;s on your mind?</span>
+                  <div className="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-charcoal">
+                    <label htmlFor="question-input" className="flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4 text-tangerine" />
+                      <span>Your Question</span>
                     </label>
 
-                    {/* Character Counter */}
                     <span
-                      className={`text-xs font-mono transition-colors ${
+                      className={
                         isOverLimit
-                          ? "text-rose-400 font-bold"
+                          ? "text-rose-600 font-black"
                           : charCount > 450
-                          ? "text-amber-400 font-bold"
-                          : "text-slate-400"
-                      }`}
+                          ? "text-tangerine font-black"
+                          : "text-charcoal/60"
+                      }
                     >
                       {charCount} / {MAX_CHARS}
                     </span>
                   </div>
 
-                  <div className="relative">
-                    <textarea
-                      id="question-input"
-                      rows={5}
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      placeholder="Ask us anything about academics, college life, careers, SAIT, or literally anything…"
-                      maxLength={MAX_CHARS + 50}
-                      disabled={submitting}
-                      className={`w-full rounded-xl bg-midnight-900/80 border p-4 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base focus:outline-none transition-all resize-none ${
-                        isOverLimit
-                          ? "border-rose-500 ring-1 ring-rose-500"
-                          : "border-white/10 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/30"
-                      }`}
-                    />
-                  </div>
+                  <textarea
+                    id="question-input"
+                    rows={5}
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    placeholder="What's on your mind? Don't hold back..."
+                    maxLength={MAX_CHARS + 50}
+                    disabled={submitting}
+                    className="w-full p-4 rounded-2xl bg-ivory-50 border-2 border-charcoal text-charcoal placeholder:text-charcoal/40 text-base font-medium focus:outline-none focus:ring-4 focus:ring-citrus/40 resize-none transition-all"
+                  />
                 </div>
 
-                {/* Error Banner */}
                 {errorMessage && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-rose-300 text-xs sm:text-sm animate-in fade-in duration-200">
-                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <p className="flex-1">{errorMessage}</p>
+                  <div className="p-3 rounded-xl bg-rose-100 border-2 border-rose-600 flex items-center gap-2 text-rose-900 text-xs font-bold">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
-                {/* Submit Action Button */}
                 <button
                   type="submit"
                   disabled={!isValid || submitting}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 text-white font-semibold text-sm sm:text-base shadow-spatial-glow hover:opacity-95 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+                  className="btn-editorial-tangerine w-full py-4 px-6 rounded-2xl text-base uppercase tracking-wider shadow-editorial transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <RefreshCw className="w-5 h-5 animate-spin" />
                       <span>Submitting Anonymously...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4" />
-                      <span>Submit Question</span>
+                      <Send className="w-5 h-5" />
+                      <span>Submit Question Anonymously</span>
                     </>
                   )}
                 </button>
-              </form>
-            </SpatialCard>
 
-            {/* Optional Topic Inspiration Chips */}
+                {/* Privacy Guarantee Pill */}
+                <div className="text-center pt-2">
+                  <span className="text-[11px] font-mono text-charcoal/70 inline-flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-olive" />
+                    <span>100% Anonymous. No login, registration, or name required.</span>
+                  </span>
+                </div>
+              </form>
+            </div>
+
+            {/* Inspiration Chips */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 text-center">
-                Need ideas? Tap any topic to start:
-              </p>
+              <span className="block text-[11px] font-mono font-bold uppercase tracking-wider text-charcoal/70 text-center">
+                Need inspiration? Tap any topic to start:
+              </span>
               <div className="flex flex-wrap gap-2 justify-center">
                 {SUGGESTED_TOPICS.map((topic) => (
                   <button
                     key={topic}
                     type="button"
-                    onClick={() => handleSuggestionClick(topic)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-midnight-900/60 hover:bg-violet-950/60 border border-white/5 hover:border-violet-500/30 text-slate-300 hover:text-white transition-all active:scale-95 text-left"
+                    onClick={() => {
+                      if (!question) {
+                        setQuestion(`Regarding ${topic.replace(/^[^\w\s]+/, "").trim()}: `);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-full bg-white hover:bg-citrus border border-charcoal text-xs font-medium text-charcoal transition-colors active:scale-95 text-left"
                   >
                     {topic}
                   </button>
@@ -254,8 +242,8 @@ export default function SubmitPage() {
         )}
       </main>
 
-      <footer className="py-4 text-center text-xs text-slate-500 border-t border-white/5">
-        Student Association of Information Technology (SAIT) • GIM Ask Us Anything
+      <footer className="py-4 text-center text-xs font-mono text-charcoal/60 border-t border-charcoal/15">
+        Student Association of Information Technology (SAIT) · GIM Ask Us Anything
       </footer>
     </div>
   );
