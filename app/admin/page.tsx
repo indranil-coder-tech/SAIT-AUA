@@ -276,8 +276,8 @@ export default function AdminPage() {
                   type="password"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Enter secret PIN (e.g. sait2025)"
-                  className="w-full px-4 py-3 rounded-xl bg-ivory border-2 border-charcoal text-charcoal placeholder:text-charcoal/40 text-center tracking-widest text-xl font-mono font-bold focus:outline-none focus:ring-4 focus:ring-citrus/40"
+                  placeholder="Enter PIN: SAIT2026"
+                  className="w-full px-4 py-3 rounded-xl bg-ivory border-2 border-charcoal text-charcoal placeholder:text-charcoal/40 text-center tracking-widest text-xl font-mono font-bold focus:outline-none focus:ring-4 focus:ring-citrus/40 uppercase"
                   autoFocus
                 />
               </div>

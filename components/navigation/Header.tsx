@@ -28,7 +28,7 @@ export function Header({ status = "connected", compact = false }: HeaderProps) {
                 ASK US ANYTHING
               </span>
               <span className="hidden sm:inline-block text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-sage/30 text-olive-dark border border-charcoal">
-                GIM &apos;25
+                GIM &apos;26
               </span>
             </div>
             {!compact && (

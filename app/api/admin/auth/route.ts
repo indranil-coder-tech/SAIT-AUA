@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createSessionToken,
-  getExpectedPin,
+  verifyAdminPin,
   isAuthenticated,
   setAdminSessionCookie,
   clearAdminSessionCookie,
 } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limiter";
-import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +22,8 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get("x-forwarded-for") || "admin-client";
 
-    // Rate limiting: 5 attempts per 3 minutes to stop brute-forcing
-    const rateCheck = checkRateLimit(`login-${ip}`, 5, 180);
+    // Rate limiting: 10 attempts per 3 minutes
+    const rateCheck = checkRateLimit(`login-${ip}`, 10, 180);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         {
@@ -45,16 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const expectedPin = getExpectedPin();
-
-    // Constant-time comparison to prevent timing attacks
-    const pinBuffer = Buffer.from(pin);
-    const expectedBuffer = Buffer.from(expectedPin);
-
-    let isValid = false;
-    if (pinBuffer.length === expectedBuffer.length) {
-      isValid = crypto.timingSafeEqual(pinBuffer, expectedBuffer);
-    }
+    const isValid = verifyAdminPin(pin);
 
     if (!isValid) {
       return NextResponse.json(

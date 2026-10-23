@@ -119,7 +119,7 @@ async function runTests() {
     const resLogin = await fetch(`${baseUrl}/api/admin/auth`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin: "sait2025" }),
+      body: JSON.stringify({ pin: "SAIT2026" }),
     });
     assert(resLogin.status === 200, "Authorizes correct admin PIN (HTTP 200)");
     const setCookie = resLogin.headers.get("set-cookie");

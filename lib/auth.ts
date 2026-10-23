@@ -9,7 +9,34 @@ function getSessionSecret(): string {
 }
 
 export function getExpectedPin(): string {
-  return process.env.ADMIN_PIN || "sait2025";
+  return process.env.ADMIN_PIN || "SAIT2026";
+}
+
+/**
+ * Validates the admin PIN case-insensitively.
+ * Accepts the configured ADMIN_PIN or default 'SAIT2026' / 'sait2025'.
+ */
+export function verifyAdminPin(inputPin: string): boolean {
+  if (!inputPin) return false;
+  const normalizedInput = inputPin.trim().toLowerCase();
+  const configuredPin = process.env.ADMIN_PIN ? process.env.ADMIN_PIN.trim().toLowerCase() : null;
+
+  if (configuredPin) {
+    const inputBuf = Buffer.from(normalizedInput);
+    const expBuf = Buffer.from(configuredPin);
+    if (inputBuf.length === expBuf.length) {
+      return crypto.timingSafeEqual(inputBuf, expBuf);
+    }
+    return false;
+  }
+
+  // Defaults: accepts SAIT2026, sait2026, SAIT2025, sait2025
+  const validDefaults = ["sait2026", "sait2025"];
+  return validDefaults.some((p) => {
+    const pBuf = Buffer.from(p);
+    const inBuf = Buffer.from(normalizedInput);
+    return inBuf.length === pBuf.length && crypto.timingSafeEqual(inBuf, pBuf);
+  });
 }
 
 /**
