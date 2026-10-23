@@ -8,34 +8,32 @@ function getSessionSecret(): string {
   return process.env.ADMIN_SESSION_SECRET || "sait-secret-key-development-fallback-do-not-use-in-prod-xyz123";
 }
 
-export function getExpectedPin(): string {
-  return process.env.ADMIN_PIN || "SAIT2026";
-}
-
 /**
- * Validates the admin PIN case-insensitively.
- * Accepts the configured ADMIN_PIN or default 'SAIT2026' / 'sait2025'.
+ * Validates the admin PIN case-insensitively using constant-time hash comparison.
+ * The PIN is verified strictly on the server against the ADMIN_PIN environment variable.
  */
 export function verifyAdminPin(inputPin: string): boolean {
-  if (!inputPin) return false;
+  if (!inputPin || typeof inputPin !== "string") return false;
   const normalizedInput = inputPin.trim().toLowerCase();
   const configuredPin = process.env.ADMIN_PIN ? process.env.ADMIN_PIN.trim().toLowerCase() : null;
 
+  const inputHash = crypto.createHash("sha256").update(normalizedInput).digest();
+
   if (configuredPin) {
-    const inputBuf = Buffer.from(normalizedInput);
-    const expBuf = Buffer.from(configuredPin);
-    if (inputBuf.length === expBuf.length) {
-      return crypto.timingSafeEqual(inputBuf, expBuf);
-    }
+    const expHash = crypto.createHash("sha256").update(configuredPin).digest();
+    return crypto.timingSafeEqual(inputHash, expHash);
+  }
+
+  // Refuse fallback in production mode if ADMIN_PIN is not configured
+  if (process.env.NODE_ENV === "production") {
     return false;
   }
 
-  // Defaults: accepts SAIT2026, sait2026, SAIT2025, sait2025
-  const validDefaults = ["sait2026", "sait2025"];
-  return validDefaults.some((p) => {
-    const pBuf = Buffer.from(p);
-    const inBuf = Buffer.from(normalizedInput);
-    return inBuf.length === pBuf.length && crypto.timingSafeEqual(inBuf, pBuf);
+  // Development-only fallbacks
+  const devDefaults = ["sait2026", "sait2025"];
+  return devDefaults.some((defaultPin) => {
+    const expHash = crypto.createHash("sha256").update(defaultPin).digest();
+    return crypto.timingSafeEqual(inputHash, expHash);
   });
 }
 

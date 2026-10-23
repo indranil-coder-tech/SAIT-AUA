@@ -1,87 +1,25 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Maximize2, Minimize2, Tv, Radio, AlertTriangle, Layers, MessageSquare } from "lucide-react";
-import { Question, SessionState } from "@/lib/types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const LOCAL_STORAGE_CACHE_KEY = "sait_display_last_synced_questions";
-const LOCAL_STORAGE_SESSION_KEY = "sait_display_last_synced_session";
+import React, { useEffect, useState } from "react";
+import { Maximize2, Minimize2, Radio, AlertTriangle, Layers, MessageSquare } from "lucide-react";
+import { useQuestionSync, broadcastSyncEvent } from "@/lib/sync";
 
 export default function DisplayPage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [session, setSession] = useState<SessionState | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"connected" | "reconnecting" | "offline">("connected");
-  const [lastSyncTime, setLastSyncTime] = useState<string>("");
-  const prevCountRef = useRef<number>(0);
 
-  // Load from local storage cache initially for fast startup & offline resilience
-  useEffect(() => {
-    try {
-      const cachedQ = localStorage.getItem(LOCAL_STORAGE_CACHE_KEY);
-      const cachedS = localStorage.getItem(LOCAL_STORAGE_SESSION_KEY);
-      if (cachedQ) setQuestions(JSON.parse(cachedQ));
-      if (cachedS) setSession(JSON.parse(cachedS));
-    } catch {
-      // ignore cache read errors
-    }
-  }, []);
-
-  // Fetch latest data from server
-  const loadData = useCallback(async () => {
-    try {
-      const res = await fetch("/api/questions?includeHidden=false", { cache: "no-store" });
-      if (!res.ok) throw new Error("Network error");
-      const json = await res.json();
-      if (json.success && json.data) {
-        const fetchedQuestions: Question[] = json.data.questions || [];
-        const fetchedSession: SessionState = json.data.session || null;
-
-        prevCountRef.current = fetchedQuestions.length;
-        setQuestions(fetchedQuestions);
-        setSession(fetchedSession);
-        setConnectionStatus("connected");
-        setLastSyncTime(new Date().toLocaleTimeString());
-
-        // Cache in browser storage for offline resilience
-        try {
-          localStorage.setItem(LOCAL_STORAGE_CACHE_KEY, JSON.stringify(fetchedQuestions));
-          localStorage.setItem(LOCAL_STORAGE_SESSION_KEY, JSON.stringify(fetchedSession));
-        } catch {
-          // ignore cache write error
-        }
-      }
-    } catch {
-      setConnectionStatus("reconnecting");
-    }
-  }, []);
-
-  // Polling fallback
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 3000);
-    return () => clearInterval(interval);
-  }, [loadData]);
-
-  // Subscribe to Supabase Realtime
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel("projector_realtime_channel")
-      .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => loadData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "session_state" }, () => loadData())
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") setConnectionStatus("connected");
-        else if (status === "CLOSED" || status === "TIMED_OUT") setConnectionStatus("reconnecting");
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [loadData]);
+  // Synchronized question queue and spotlight state
+  const {
+    questions,
+    session,
+    connectionStatus,
+    lastSyncTime,
+    setSession,
+  } = useQuestionSync({
+    includeHidden: false,
+    enabled: true,
+    pollingIntervalMs: 8000,
+    cacheKeyPrefix: "sait_display_last_synced",
+  });
 
   // Fullscreen toggle
   const toggleFullscreen = () => {
@@ -105,13 +43,14 @@ export default function DisplayPage() {
     // 1. Instantly update UI locally
     setSession((prev) => (prev ? { ...prev, current_question_id: qId } : null));
 
-    // 2. Synchronize to backend & Realtime
+    // 2. Synchronize to backend, Realtime & BroadcastChannel
     try {
       await fetch("/api/display/spotlight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ questionId: qId }),
       });
+      broadcastSyncEvent("SPOTLIGHT_UPDATED");
     } catch (err) {
       console.warn("Could not sync spotlight to server:", err);
     }
@@ -219,7 +158,7 @@ export default function DisplayPage() {
                     ✕ Clear Screen
                   </button>
                   <span className="hidden sm:inline font-mono text-xs font-bold uppercase tracking-widest text-charcoal/70">
-                    SAIT · GIM 2025
+                    SAIT · GIM 2026
                   </span>
                 </div>
               </div>
@@ -314,7 +253,7 @@ export default function DisplayPage() {
 
       {/* Presentation Footer */}
       <footer className="px-6 py-3 bg-white border-t-2 border-charcoal flex items-center justify-between font-mono text-xs text-charcoal/70">
-        <span>SAIT · GENERAL INTRODUCTORY MEETING (GIM 2025)</span>
+        <span>SAIT · GENERAL INTRODUCTORY MEETING (GIM 2026)</span>
         <span className="hidden sm:inline">PRESS F11 FOR FULLSCREEN PRESENTATION</span>
       </footer>
     </div>

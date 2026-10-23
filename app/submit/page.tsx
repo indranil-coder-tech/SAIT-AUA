@@ -5,6 +5,7 @@ import confetti from "canvas-confetti";
 import { Send, CheckCircle2, AlertCircle, RefreshCw, Shield, HelpCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/navigation/Header";
+import { broadcastSyncEvent } from "@/lib/sync";
 
 const MAX_CHARS = 500;
 
@@ -53,6 +54,7 @@ export default function SubmitPage() {
       }
 
       setSubmittedSuccess(true);
+      broadcastSyncEvent("QUESTION_SUBMITTED");
 
       confetti({
         particleCount: 75,

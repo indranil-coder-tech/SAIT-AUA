@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -9,7 +9,6 @@ import {
   Shield,
   Send,
   Tv,
-  ShieldCheck,
   CheckCircle2,
   RefreshCw,
   AlertCircle,
@@ -18,8 +17,7 @@ import {
 import confetti from "canvas-confetti";
 import { Header } from "@/components/navigation/Header";
 import { Sculptural3DQuestion } from "@/components/spatial/Sculptural3DQuestion";
-import { Question } from "@/lib/types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useQuestionSync, broadcastSyncEvent } from "@/lib/sync";
 
 const EDITORIAL_TOPICS = [
   "🎯 SAIT Activities & Hackathons",
@@ -31,48 +29,18 @@ const EDITORIAL_TOPICS = [
 ];
 
 export default function HomePage() {
-  const [liveQuestions, setLiveQuestions] = useState<Question[]>([]);
   const [questionText, setQuestionText] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load live questions queue from API
-  const loadQuestions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/questions?includeHidden=false", { cache: "no-store" });
-      const json = await res.json();
-      if (json.success && json.data) {
-        setLiveQuestions(json.data.questions || []);
-      }
-    } catch {
-      // ignore network errors on polling
-    }
-  }, []);
-
-  useEffect(() => {
-    loadQuestions();
-    const interval = setInterval(loadQuestions, 4000);
-    return () => clearInterval(interval);
-  }, [loadQuestions]);
-
-  // Supabase Realtime subscription
-  useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel("home_live_channel")
-      .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => {
-        loadQuestions();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [loadQuestions]);
+  // Synchronized live questions queue
+  const { questions: liveQuestions, refresh: loadQuestions } = useQuestionSync({
+    includeHidden: false,
+    enabled: true,
+    pollingIntervalMs: 10000,
+  });
 
   // Submission handler
   const handleInlineSubmit = async (e: React.FormEvent) => {
@@ -103,6 +71,7 @@ export default function HomePage() {
         colors: ["#FF814F", "#E8F05A", "#9EAE86", "#20231E"],
       });
       loadQuestions();
+      broadcastSyncEvent("QUESTION_SUBMITTED");
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Error submitting question.");
     } finally {
@@ -157,7 +126,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-6">
               <span className="hidden sm:inline">LIVE QUESTION FORUM</span>
-              <span>EST. 2025</span>
+              <span>GIM - 2026</span>
               <span>VOL. 01</span>
             </div>
           </div>

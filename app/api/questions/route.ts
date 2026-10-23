@@ -10,10 +10,25 @@ export async function GET(request: NextRequest) {
   try {
     const admin = await isAuthenticated();
     const searchParams = request.nextUrl.searchParams;
-    const includeHidden = admin && searchParams.get("includeHidden") === "true";
+    const requestedHidden = searchParams.get("includeHidden") === "true";
 
+    // Enforce server-side authorization: Reject unauthenticated requests attempting to view hidden questions
+    if (requestedHidden && !admin) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized. Admin credentials required to access hidden questions." },
+        { status: 401 }
+      );
+    }
+
+    const includeHidden = admin && requestedHidden;
     const questions = await fetchQuestions({ includeHidden });
     const session = await fetchSessionState();
+
+    // For public audiences, ensure hidden question is never exposed in the spotlight
+    if (!admin && session.current_question?.status === "hidden") {
+      session.current_question = null;
+      session.current_question_id = null;
+    }
 
     return NextResponse.json({
       success: true,

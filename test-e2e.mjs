@@ -3,7 +3,7 @@ import http from "http";
 // Simple test suite runner for Node.js
 async function runTests() {
   console.log("=== STARTING AUTOMATED TEST SUITE FOR SAIT ASK US ANYTHING ===");
-  const baseUrl = "http://localhost:3000";
+  const baseUrl = process.env.TEST_BASE_URL || "http://localhost:3000";
 
   let passed = 0;
   let failed = 0;
@@ -84,9 +84,13 @@ async function runTests() {
     assert(qList.every(q => q.status !== "hidden"), "Public queue excludes hidden items");
   }
 
-  // 4. Test F: Admin Authorization Enforcement
-  console.log("\n--- TEST GROUP: Authorization Security ---");
+  // 4. Test F: Admin Authorization Enforcement & Hidden Questions Protection
+  console.log("\n--- TEST GROUP: Authorization Security & Hidden Questions ---");
   {
+    // Try to access hidden questions without admin session
+    const resHiddenUnauthed = await fetch(`${baseUrl}/api/questions?includeHidden=true`);
+    assert(resHiddenUnauthed.status === 401, "Rejects unauthenticated request for hidden questions (HTTP 401)");
+
     // Try to update status without cookie
     const resUnauthed = await fetch(`${baseUrl}/api/admin/questions/${submittedId1}`, {
       method: "PATCH",
@@ -152,6 +156,24 @@ async function runTests() {
     });
     const answerJson = await resAnswer.json();
     assert(answerJson.success && answerJson.data.status === "answered", "Admin successfully marks question as answered");
+    // Authenticated access to hidden questions
+    const resHiddenAuthed = await fetch(`${baseUrl}/api/questions?includeHidden=true`, {
+      headers: { Cookie: cookieHeader },
+    });
+    assert(resHiddenAuthed.status === 200, "Authenticated admin can access hidden questions (HTTP 200)");
+
+    // Verify admin page placeholder security
+    const resAdminHtml = await fetch(`${baseUrl}/admin`);
+    const adminHtml = await resAdminHtml.text();
+    const chunkMatch = adminHtml.match(/\/static\/chunks\/app\/admin\/page(-[a-z0-9]+)?\.js/);
+    let clientJs = "";
+    if (chunkMatch) {
+      const resJs = await fetch(`${baseUrl}/_next${chunkMatch[0]}`);
+      clientJs = await resJs.text();
+    }
+    const hasGenericPlaceholder = adminHtml.includes("Enter admin PIN") || clientJs.includes("Enter admin PIN");
+    assert(hasGenericPlaceholder, "Admin page displays generic placeholder 'Enter admin PIN'");
+    assert(!adminHtml.includes("SAIT2026") && !clientJs.includes("SAIT2026"), "Admin page does NOT leak PIN in placeholder or client bundle");
   }
 
   // 6. Test H: Question Backups (CSV & JSON)

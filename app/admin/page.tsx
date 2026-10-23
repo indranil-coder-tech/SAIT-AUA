@@ -23,19 +23,27 @@ import {
 import { Header } from "@/components/navigation/Header";
 import { QRCodeCard } from "@/components/qr/QRCodeCard";
 import { Question, SessionState, QuestionStatus } from "@/lib/types";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useQuestionSync, broadcastSyncEvent } from "@/lib/sync";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
   const [loggingIn, setLoggingIn] = useState(false);
-
-  // Dashboard Data State
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [session, setSession] = useState<SessionState | null>(null);
-  const [loadingData, setLoadingData] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Synchronized questions queue & session state
+  const {
+    questions,
+    session,
+    loading: loadingData,
+    refresh: loadData,
+    setSession,
+  } = useQuestionSync({
+    includeHidden: true,
+    enabled: isAuthenticated === true,
+    pollingIntervalMs: 8000,
+  });
 
   // Filters & Search
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "answered" | "hidden">("all");
@@ -59,48 +67,6 @@ export default function AdminPage() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
-
-  // Load questions and session state
-  const loadData = useCallback(async () => {
-    try {
-      setLoadingData(true);
-      const res = await fetch("/api/questions?includeHidden=true", { cache: "no-store" });
-      const json = await res.json();
-      if (json.success && json.data) {
-        setQuestions(json.data.questions || []);
-        setSession(json.data.session || null);
-      }
-    } catch (err) {
-      console.error("Error loading admin data:", err);
-    } finally {
-      setLoadingData(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-      const interval = setInterval(loadData, 3500);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, loadData]);
-
-  // Supabase Realtime Subscription for instant updates
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel("admin_realtime_channel")
-      .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => loadData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "session_state" }, () => loadData())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isAuthenticated, loadData]);
 
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
@@ -153,6 +119,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.success && json.data) {
         setSession(json.data);
+        broadcastSyncEvent("SESSION_UPDATED");
       }
     } catch (err) {
       console.error("Session action error:", err);
@@ -173,6 +140,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (json.success) {
         await loadData();
+        broadcastSyncEvent("STATUS_UPDATED");
       }
     } catch (err) {
       console.error("Status update error:", err);
@@ -192,6 +160,7 @@ export default function AdminPage() {
       if (json.success) {
         setDeleteConfirmId(null);
         await loadData();
+        broadcastSyncEvent("QUESTION_DELETED");
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -213,6 +182,7 @@ export default function AdminPage() {
       if (json.success) {
         setResetModalOpen(false);
         await loadData();
+        broadcastSyncEvent("SESSION_RESET");
       }
     } catch (err) {
       console.error("Reset session error:", err);
@@ -269,14 +239,15 @@ export default function AdminPage() {
                   htmlFor="admin-pin"
                   className="block text-xs font-mono font-bold uppercase tracking-wider text-charcoal mb-2"
                 >
-                  Admin Security PIN
+                  Admin PIN
                 </label>
                 <input
                   id="admin-pin"
                   type="password"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Enter PIN: SAIT2026"
+                  placeholder="Enter admin PIN"
+                  autoComplete="current-password"
                   className="w-full px-4 py-3 rounded-xl bg-ivory border-2 border-charcoal text-charcoal placeholder:text-charcoal/40 text-center tracking-widest text-xl font-mono font-bold focus:outline-none focus:ring-4 focus:ring-citrus/40 uppercase"
                   autoFocus
                 />

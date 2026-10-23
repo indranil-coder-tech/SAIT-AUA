@@ -67,7 +67,7 @@ export function Sculptural3DQuestion() {
           <div className="absolute inset-0 bg-editorial-grid opacity-30 pointer-events-none" />
 
           <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-widest text-charcoal font-bold z-10">
-            <span>SAIT · GIM 2025</span>
+            <span>SAIT · GIM 2026</span>
             <span className="px-2 py-0.5 rounded-full bg-citrus text-charcoal text-[10px] border border-charcoal">
               AUA VOL. 01
             </span>
