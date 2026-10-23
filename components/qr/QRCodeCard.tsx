@@ -94,6 +94,7 @@ export function QRCodeCard({ customUrl, className }: QRCodeCardProps) {
         {/* QR Code Container with High-Contrast White Background & Margin */}
         <div className="relative p-3.5 rounded-2xl bg-white shadow-spatial-glow border-2 border-cyan-400/30 group">
           {dataUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={dataUrl}
               alt="Scan to submit an anonymous question to SAIT"
