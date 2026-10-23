@@ -100,6 +100,23 @@ export default function DisplayPage() {
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
 
+  // Handle clicking a question in the queue to show on the above screen
+  const handleSelectQuestion = async (qId: string | null) => {
+    // 1. Instantly update UI locally
+    setSession((prev) => (prev ? { ...prev, current_question_id: qId } : null));
+
+    // 2. Synchronize to backend & Realtime
+    try {
+      await fetch("/api/display/spotlight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ questionId: qId }),
+      });
+    } catch (err) {
+      console.warn("Could not sync spotlight to server:", err);
+    }
+  };
+
   // Compute active question
   const currentQuestionId = session?.current_question_id;
   const currentQuestion = currentQuestionId
@@ -193,9 +210,18 @@ export default function DisplayPage() {
                   </span>
                 </div>
 
-                <span className="font-mono text-xs font-bold uppercase tracking-widest text-charcoal/70">
-                  STUDENT ASSOCIATION OF IT · GIM 2025
-                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleSelectQuestion(null)}
+                    className="px-3 py-1 rounded-full bg-ivory hover:bg-rose-100 border border-charcoal font-mono text-[11px] font-bold uppercase transition-all"
+                    title="Return to waiting stage"
+                  >
+                    ✕ Clear Screen
+                  </button>
+                  <span className="hidden sm:inline font-mono text-xs font-bold uppercase tracking-widest text-charcoal/70">
+                    SAIT · GIM 2025
+                  </span>
+                </div>
               </div>
 
               {/* Massive High-Contrast Question Typography */}
@@ -244,12 +270,14 @@ export default function DisplayPage() {
 
         {/* BOTTOM DOCK: UPCOMING IN QUEUE */}
         <div className="w-full space-y-3">
-          <div className="flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-charcoal/80 px-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono font-bold uppercase tracking-wider text-charcoal/80 px-1">
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-tangerine" />
               <span>UP NEXT IN QUEUE ({upcomingQueue.length})</span>
             </div>
-            <span>CONTROLLED LIVE FROM ADMIN PANEL</span>
+            <span className="text-[11px] bg-citrus/40 px-2.5 py-0.5 rounded-full border border-charcoal text-charcoal">
+              👈 CLICK ANY QUESTION TO SHOW ON SCREEN
+            </span>
           </div>
 
           {upcomingQueue.length === 0 ? (
@@ -259,20 +287,25 @@ export default function DisplayPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {upcomingQueue.slice(0, 3).map((q, idx) => (
-                <div
+                <button
                   key={q.id}
-                  className="editorial-box rounded-2xl p-4 flex flex-col justify-between gap-2"
+                  type="button"
+                  onClick={() => handleSelectQuestion(q.id)}
+                  className="editorial-box rounded-2xl p-4 flex flex-col justify-between gap-2 text-left cursor-pointer hover:bg-citrus/20 hover:scale-[1.02] active:scale-[0.98] transition-all group"
+                  title="Click to spotlight this question on the stage screen above"
                 >
-                  <div className="flex items-center justify-between text-xs font-mono font-bold">
+                  <div className="flex items-center justify-between text-xs font-mono font-bold w-full">
                     <span className="bg-sage/40 px-2 py-0.5 rounded-full border border-charcoal">
                       #{q.sequence_number || idx + 1}
                     </span>
-                    <span className="text-[10px] text-charcoal/60">PENDING</span>
+                    <span className="text-[10px] bg-charcoal text-citrus font-mono px-2 py-0.5 rounded-full font-bold group-hover:bg-tangerine group-hover:text-white transition-colors">
+                      Click to Show ↗
+                    </span>
                   </div>
                   <p className="text-sm font-bold text-charcoal line-clamp-2">
                     {q.question}
                   </p>
-                </div>
+                </button>
               ))}
             </div>
           )}
