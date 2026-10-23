@@ -2,6 +2,10 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 let serverClient: SupabaseClient | null = null;
 
+function cleanSupabaseUrl(rawUrl: string): string {
+  return rawUrl.trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
+}
+
 export const isSupabaseServerConfigured = (): boolean => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -18,8 +22,8 @@ export const getSupabaseServerClient = (): SupabaseClient | null => {
     return null;
   }
   if (!serverClient) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const url = cleanSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL!);
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!.trim();
     serverClient = createClient(url, serviceKey, {
       auth: {
         persistSession: false,
