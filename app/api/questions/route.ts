@@ -49,10 +49,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get("x-forwarded-for") || "anonymous-client";
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = (forwarded ? forwarded.split(",")[0].trim() : null) || "anonymous-client";
 
-    // 1. Rate-limiting check: max 5 submissions every 30 seconds per client IP
-    const rateCheck = checkRateLimit(`submit-${ip}`, 5, 30);
+    // 1. Rate-limiting check: allows up to 60 submissions every 30 seconds
+    // to support high-concurrency auditorium/college Wi-Fi NAT environments
+    const rateCheck = checkRateLimit(`submit-${ip}`, 60, 30);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         {

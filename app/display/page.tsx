@@ -1,11 +1,24 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Maximize2, Minimize2, Radio, AlertTriangle, Layers, MessageSquare } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Maximize2,
+  Minimize2,
+  Radio,
+  AlertTriangle,
+  Layers,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  Columns3,
+} from "lucide-react";
 import { useQuestionSync, broadcastSyncEvent } from "@/lib/sync";
 
 export default function DisplayPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [viewMode, setViewMode] = useState<"carousel" | "grid">("carousel");
+  const queueScrollRef = useRef<HTMLDivElement>(null);
 
   // Synchronized question queue and spotlight state
   const {
@@ -37,6 +50,16 @@ export default function DisplayPage() {
     document.addEventListener("fullscreenchange", handleFsChange);
     return () => document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
+
+  // Smooth scroll for upcoming queue carousel
+  const scrollQueue = (direction: "left" | "right") => {
+    if (!queueScrollRef.current) return;
+    const scrollAmount = queueScrollRef.current.clientWidth * 0.75;
+    queueScrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   // Handle clicking a question in the queue to show on the above screen
   const handleSelectQuestion = async (qId: string | null) => {
@@ -209,28 +232,92 @@ export default function DisplayPage() {
 
         {/* BOTTOM DOCK: UPCOMING IN QUEUE */}
         <div className="w-full space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono font-bold uppercase tracking-wider text-charcoal/80 px-1">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-tangerine" />
-              <span>UP NEXT IN QUEUE ({upcomingQueue.length})</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono font-bold uppercase tracking-wider text-charcoal/80 px-1">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-tangerine" />
+                <span>UP NEXT IN QUEUE ({upcomingQueue.length})</span>
+              </div>
+
+              {/* View Switcher: Carousel vs Full Grid */}
+              {upcomingQueue.length > 0 && (
+                <div className="flex items-center border-2 border-charcoal rounded-xl overflow-hidden bg-white shadow-editorial-xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("carousel")}
+                    className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[11px] font-bold transition-all ${
+                      viewMode === "carousel"
+                        ? "bg-charcoal text-citrus"
+                        : "text-charcoal/70 hover:bg-ivory"
+                    }`}
+                    title="Horizontal Carousel View"
+                  >
+                    <Columns3 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Carousel</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    className={`px-2.5 py-1 flex items-center gap-1 font-mono text-[11px] font-bold transition-all ${
+                      viewMode === "grid"
+                        ? "bg-charcoal text-citrus"
+                        : "text-charcoal/70 hover:bg-ivory"
+                    }`}
+                    title="Multi-column Grid View"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">All ({upcomingQueue.length})</span>
+                  </button>
+                </div>
+              )}
             </div>
-            <span className="text-[11px] bg-citrus/40 px-2.5 py-0.5 rounded-full border border-charcoal text-charcoal">
-              👈 CLICK ANY QUESTION TO SHOW ON SCREEN
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] bg-citrus/40 px-2.5 py-0.5 rounded-full border border-charcoal text-charcoal">
+                👈 CLICK ANY QUESTION TO SHOW ON SCREEN
+              </span>
+
+              {/* Carousel scroll arrows */}
+              {viewMode === "carousel" && upcomingQueue.length > 3 && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => scrollQueue("left")}
+                    className="p-1.5 rounded-xl bg-white hover:bg-citrus/40 border-2 border-charcoal transition-all shadow-editorial-xs active:translate-x-[1px]"
+                    title="Scroll Left"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-charcoal" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollQueue("right")}
+                    className="p-1.5 rounded-xl bg-white hover:bg-citrus/40 border-2 border-charcoal transition-all shadow-editorial-xs active:translate-x-[1px]"
+                    title="Scroll Right"
+                  >
+                    <ChevronRight className="w-4 h-4 text-charcoal" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {upcomingQueue.length === 0 ? (
             <div className="p-4 rounded-2xl bg-white/70 border-2 border-charcoal/30 text-center font-mono text-xs text-charcoal/60">
               No additional pending questions in queue right now.
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {upcomingQueue.slice(0, 3).map((q, idx) => (
+          ) : viewMode === "carousel" ? (
+            /* Carousel View: Horizontal scroll showing ALL questions without limitation */
+            <div
+              ref={queueScrollRef}
+              className="flex gap-4 overflow-x-auto pb-3 pt-1 px-1 scroll-smooth snap-x snap-mandatory scrollbar-thin"
+              style={{ scrollbarWidth: "thin" }}
+            >
+              {upcomingQueue.map((q, idx) => (
                 <button
                   key={q.id}
                   type="button"
                   onClick={() => handleSelectQuestion(q.id)}
-                  className="editorial-box rounded-2xl p-4 flex flex-col justify-between gap-2 text-left cursor-pointer hover:bg-citrus/20 hover:scale-[1.02] active:scale-[0.98] transition-all group"
+                  className="editorial-box rounded-2xl p-4 flex flex-col justify-between gap-2.5 text-left cursor-pointer hover:bg-citrus/20 hover:scale-[1.02] active:scale-[0.98] transition-all group min-w-[280px] sm:min-w-[320px] md:min-w-[360px] max-w-[400px] shrink-0 snap-start"
                   title="Click to spotlight this question on the stage screen above"
                 >
                   <div className="flex items-center justify-between text-xs font-mono font-bold w-full">
@@ -242,6 +329,34 @@ export default function DisplayPage() {
                     </span>
                   </div>
                   <p className="text-sm font-bold text-charcoal line-clamp-2">
+                    {q.question}
+                  </p>
+                </button>
+              ))}
+            </div>
+          ) : (
+            /* Grid View: Scrollable multi-column grid displaying ALL questions */
+            <div
+              className="max-h-72 overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 scrollbar-thin"
+              style={{ scrollbarWidth: "thin" }}
+            >
+              {upcomingQueue.map((q, idx) => (
+                <button
+                  key={q.id}
+                  type="button"
+                  onClick={() => handleSelectQuestion(q.id)}
+                  className="editorial-box rounded-2xl p-3.5 flex flex-col justify-between gap-2 text-left cursor-pointer hover:bg-citrus/20 hover:scale-[1.01] active:scale-[0.98] transition-all group bg-white"
+                  title="Click to spotlight this question on the stage screen above"
+                >
+                  <div className="flex items-center justify-between text-xs font-mono font-bold w-full">
+                    <span className="bg-sage/40 px-2 py-0.5 rounded-full border border-charcoal">
+                      #{q.sequence_number || idx + 1}
+                    </span>
+                    <span className="text-[10px] bg-charcoal text-citrus font-mono px-2 py-0.5 rounded-full font-bold group-hover:bg-tangerine group-hover:text-white transition-colors">
+                      Show ↗
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-bold text-charcoal line-clamp-2">
                     {q.question}
                   </p>
                 </button>

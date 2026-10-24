@@ -218,14 +218,22 @@ export function useQuestionSync({
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
+    let debounceTimer: NodeJS.Timeout | null = null;
+    const debouncedRealtimeSync = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        loadData(true);
+      }, 300);
+    };
+
     const channelName = `realtime_${includeHidden ? "admin" : "public"}_${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
       .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "questions" }, () => {
-        loadData(true);
+        debouncedRealtimeSync();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "session_state" }, () => {
-        loadData(true);
+        debouncedRealtimeSync();
       })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -240,6 +248,7 @@ export function useQuestionSync({
       });
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       isRealtimeActiveRef.current = false;
       supabase.removeChannel(channel);
     };
